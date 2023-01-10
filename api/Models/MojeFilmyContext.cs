@@ -26,11 +26,11 @@ public partial class MojeFilmyContext : DbContext
             entity.Property(e => e.Director)
                 .HasMaxLength(250)
                 .IsUnicode(false);
-            entity.Property(e => e.Rate).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Rate).HasColumnType("float").IsRequired(required: false);
             entity.Property(e => e.Title)
                 .HasMaxLength(250)
                 .IsUnicode(false);
-            entity.Property(e => e.Year).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Year).HasColumnType("int").IsRequired(required: false);
         });
 
         OnModelCreatingPartial(modelBuilder);

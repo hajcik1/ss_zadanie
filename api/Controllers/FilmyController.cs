@@ -34,9 +34,16 @@ namespace MojeFilmyAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync(Filmy film)
         {
-            _context.Filmies.Add(film);
-            await _context.SaveChangesAsync();
-            return Ok(film);
+            if(_context.Filmies.Any(c => c.Title == film.Title)) {
+                return BadRequest();
+            }
+            else
+            {
+                _context.Filmies.Add(film);
+                await _context.SaveChangesAsync();
+                return Ok(film);
+            }
+           
         }
 
         [HttpPut]

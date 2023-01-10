@@ -9,9 +9,9 @@ public partial class Filmy
 
     public string Title { get; set; } = null!;
 
-    public string? Director { get; set; } = null!;
+    public string Director { get; set; } = null!;
 
-    public decimal Year { get; set; }
+    public int? Year { get; set; }
 
-    public decimal Rate { get; set; }
+    public float? Rate { get; set; }
 }

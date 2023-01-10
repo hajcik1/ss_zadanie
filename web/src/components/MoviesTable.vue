@@ -1,16 +1,30 @@
 <script>
 import axios from "axios";
 import { useVuelidate } from "@vuelidate/core";
+import { required, maxLength, between } from "@vuelidate/validators";
 
 export default {
+  setup() {
+    return {
+      v$: useVuelidate(),
+    };
+  },
   data() {
     return {
       movies: [],
       showModal: false,
+      addMode: true,
       modalHeader: "",
+      title: "",
+      year: "",
     };
   },
-
+  validations() {
+    return {
+      title: { required, maxLength: maxLength(200) },
+      year: { between: between(1900, 2200) },
+    };
+  },
   methods: {
     refreshData() {
       axios
@@ -30,38 +44,55 @@ export default {
             this.refreshData();
           }
         })
-        .catch((error) => console.log(error));
+        .catch((error) => {
+          console.log(error);
+        });
     },
-    addMovie() {
-      axios
-        .post("http://localhost:5149/api/Filmy", {
-          title: this.title,
-          director: this.director,
-          year: this.year,
-          rate: this.rate,
-        })
-        .then((response) => {
-          this.refreshData();
-          this.showModal = false;
-          console.log(`Dodano nowy film: ${response}`);
-        })
-        .catch((error) => console.log(error));
+
+    async addMovie() {
+      const isFormCorrect = await this.v$.$validate();
+      if (isFormCorrect) {
+        axios
+          .post("http://localhost:5149/api/Filmy", {
+            title: this.title,
+            director: this.director,
+            year: this.year === "" ? null : this.year,
+            rate: this.rate === "" ? null : this.rate,
+          })
+          .then((response) => {
+            this.v$.$reset();
+            this.refreshData();
+            this.showModal = false;
+            console.log(`Dodano nowy film: ${response}`);
+          })
+          .catch((error) => {
+            console.log(error);
+            alert("Film istnieje już w bazie");
+          });
+      }
     },
-    updateMovie() {
-      axios
-        .put("http://localhost:5149/api/Filmy/", {
-          id: this.id,
-          title: this.title,
-          director: this.director,
-          year: this.year,
-          rate: this.rate,
-        })
-        .then((response) => {
-          this.refreshData();
-          this.showModal = false;
-          console.log(`Dodano nowy film: ${response}`);
-        })
-        .catch((error) => console.log(error));
+    async updateMovie() {
+      const isFormCorrect = await this.v$.$validate();
+      if (isFormCorrect) {
+        axios
+          .put("http://localhost:5149/api/Filmy/", {
+            id: this.id,
+            title: this.title,
+            director: this.director,
+            year: this.year,
+            rate: this.rate,
+          })
+          .then((response) => {
+            this.v$.$reset();
+            this.refreshData();
+            this.showModal = false;
+            console.log(`Dodano nowy film: ${response}`);
+          })
+          .catch((error) => {
+            console.log(error);
+            alert("Wystąpił problem z API, spróbuj ponownie.");
+          });
+      }
     },
     deleteMovie(id) {
       if (!confirm("Film zostanie usnięty z bazy")) {
@@ -74,7 +105,9 @@ export default {
     },
     addModal() {
       this.modalHeader = "Dodaj nowy film";
+      this.addMode = true;
       this.showModal = true;
+      this.id = "";
       this.title = "";
       this.director = "";
       this.year = "";
@@ -82,6 +115,7 @@ export default {
     },
     editModal(movie) {
       this.modalHeader = "Edytuj film";
+      this.addMode = false;
       this.showModal = true;
       this.id = movie.id;
       this.title = movie.title;
@@ -91,6 +125,7 @@ export default {
     },
     cancelModal() {
       this.showModal = false;
+      this.v$.$reset();
     },
   },
   mounted: function () {
@@ -166,16 +201,32 @@ export default {
             <form @submit.prevent="handleSubmit" class="flex flex-col">
               <input v-model="id" class="border-2 hidden" />
               <label>Tytuł filmu</label>
-              <input v-model="title" class="border-2" />
+              <input v-model="v$.title.$model" class="border-2" />
+              <div
+                class="text-red-600 text-sm"
+                v-if="v$.title.required.$invalid"
+              >
+                * Pole tytuł jest wymagane.
+              </div>
+              <div
+                class="text-red-600 text-sm"
+                v-if="v$.title.maxLength.$invalid"
+              >
+                * Maksymalnie 200 znaków.
+              </div>
               <label>Reżyser</label>
               <input v-model="director" class="border-2" />
+
               <label>Rok produkcji</label>
-              <input v-model="year" class="border-2" />
+              <input v-model="v$.year.$model" class="border-2" />
+              <div class="text-red-600 text-sm" v-if="v$.year.$error">
+                * Tylko przedział 1900-2200.
+              </div>
               <label>Ocena</label>
               <input v-model="rate" class="border-2" />
               <div class="flex flex-wrap justify-around">
                 <button
-                  v-if="this.title === ''"
+                  v-if="addMode"
                   class="modal-default-button"
                   @click="addMovie()"
                 >

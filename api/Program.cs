@@ -1,9 +1,14 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MojeFilmyAPI.Models;
+using System.Reflection.Metadata;
 
 var policyName = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddCors(options =>
 {
@@ -18,6 +23,9 @@ builder.Services.AddCors(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("MojeFilmy");
+
+
+
 builder.Services.AddDbContextPool<MojeFilmyContext>(option =>
 option.UseSqlServer(connectionString)
 );
@@ -45,3 +53,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
